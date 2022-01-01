@@ -1,4 +1,11 @@
-{ pkgs ? import <nixpkgs> {} }:
-  pkgs.mkShell {
-    nativeBuildInputs = [ pkgs.buildPackages.terraform ];
+let
+  pkgs = import <nixpkgs> {};
+in
+pkgs.mkShell {
+  buildInputs = [
+    pkgs.terraform
+    pkgs.haskellPackages.dhall
+
+  ];
+  shellHook = ''echo "🚀"'';
 }
