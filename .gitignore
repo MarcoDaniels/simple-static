@@ -1,3 +1,7 @@
+.DS_Store
 .idea
 .terraform
-.DS_Store
+elm-stuff
+node_modules
+dist
+result
