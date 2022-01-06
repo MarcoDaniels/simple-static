@@ -1,9 +1,28 @@
-module Main exposing (..)
+port module Main exposing (main)
 
-main : Program () () ()
+
+port input : (String -> msg) -> Sub msg
+
+
+port output : String -> Cmd msg
+
+
+type alias Model =
+    { input : String }
+
+
+type Msg
+    = Incoming String
+
+
+main : Program () Model Msg
 main =
     Platform.worker
-        { init = \flags -> ( flags, Cmd.none )
-        , update = \msg model -> ( model, Cmd.none )
-        , subscriptions = \_ -> Sub.none
+        { init = \_ -> ( { input = "" }, Cmd.none )
+        , update =
+            \msg model ->
+                case msg of
+                    Incoming arg ->
+                        ( { model | input = arg }, output arg )
+        , subscriptions = \_ -> input Incoming
         }
