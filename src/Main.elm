@@ -1,10 +1,10 @@
 port module Main exposing (main)
 
 
-port input : (String -> msg) -> Sub msg
+port inputPort : (String -> msg) -> Sub msg
 
 
-port output : String -> Cmd msg
+port outputPort : Response -> Cmd msg
 
 
 type alias Model =
@@ -15,6 +15,21 @@ type Msg
     = Incoming String
 
 
+type alias Response =
+    { status : String
+    , statusDescription : String
+    , body : String
+    }
+
+
+buildResponse : String -> Response
+buildResponse input =
+    { status = "200"
+    , statusDescription = "OK"
+    , body = input ++ " from ELM"
+    }
+
+
 main : Program () Model Msg
 main =
     Platform.worker
@@ -23,6 +38,6 @@ main =
             \msg model ->
                 case msg of
                     Incoming arg ->
-                        ( { model | input = arg }, output arg )
-        , subscriptions = \_ -> input Incoming
+                        ( { model | input = arg }, outputPort (buildResponse arg) )
+        , subscriptions = \_ -> inputPort Incoming
         }

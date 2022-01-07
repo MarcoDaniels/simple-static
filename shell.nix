@@ -17,6 +17,7 @@ let
 
    build = pkgs.writeShellScriptBin "build" ''
    elm make src/Main.elm --optimize --output lambda/Main.js
+   cp src/index.js lambda/index.js
    '';
 in
 

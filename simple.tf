@@ -162,28 +162,33 @@ resource "aws_iam_role_policy_attachment" "lambda-logs" {
 }
 
 variable "replacements" {
-  type        = map(any)
-  default     = {}
+  type    = map(any)
+  default = {}
 }
 
 data "archive_file" "zip" {
   type        = "zip"
-  output_path = "${path.module}/dist/response.zip"
+  output_path = "${path.module}/dist/index.zip"
 
   source {
-    content  = templatefile("${path.module}/lambda/response.js", var.replacements)
-    filename = "response.js"
+    content  = templatefile("${path.module}/lambda/index.js", var.replacements)
+    filename = "index.js"
+  }
+
+  source {
+    content  = templatefile("${path.module}/lambda/Main.js", var.replacements)
+    filename = "Main.js"
   }
 }
 
 resource "aws_lambda_function" "lambda" {
   publish = true
 
-  function_name    = "simple-response"
+  function_name    = "elm-response"
   role             = aws_iam_role.lambda-edge.arn
   filename         = data.archive_file.zip.output_path
   source_code_hash = data.archive_file.zip.output_base64sha256
-  handler          = "response.handler"
+  handler          = "index.handler"
   runtime          = "nodejs14.x"
 
   depends_on = [
