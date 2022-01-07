@@ -14,6 +14,10 @@ let
     ${pkgs.elm2nix}/bin/elm2nix snapshot
     mv registry.dat nix/registry.dat
    '';
+
+   build = pkgs.writeShellScriptBin "build" ''
+   elm make src/Main.elm --optimize --output lambda/Main.js
+   '';
 in
 
 pkgs.mkShell {
@@ -26,6 +30,7 @@ pkgs.mkShell {
     pkgs.elmPackages.elm-format
     updateElm
     initElm
+    build
   ];
 
   shellHook = ''echo "🚀"'';
