@@ -19,15 +19,18 @@ type alias Header =
 
 type alias Request =
     { clientIp : String
-    , headers : List ( String, List Header )
-    , method : String -- TODO: Type
-    , querystring : Maybe String
-    , url : String
+
+    --, headers : List ( String, List Header )
+    --, method : String -- TODO: Type
+    --, querystring : Maybe String
+    --, uri : String
     }
 
 
 type alias CFConfigResponse =
-    { config : Config, request : Request }
+    { -- config : Config,
+      request : Request
+    }
 
 
 type alias CloudFront =

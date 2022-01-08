@@ -1,43 +1,71 @@
 port module Main exposing (main)
 
+import Event exposing (CFConfigResponse, CloudFront, Event, Request)
+import Json.Decode as Decode exposing (Error)
 
-port inputPort : (String -> msg) -> Sub msg
+
+port inputPort : (Decode.Value -> msg) -> Sub msg
 
 
 port outputPort : Response -> Cmd msg
 
 
 type alias Model =
-    { input : String }
+    { event : Maybe Event }
 
 
 type Msg
-    = Incoming String
+    = Incoming (Result Error Event)
 
 
 type alias Response =
-    { status : String
-    , statusDescription : String
-    , body : String
-    }
-
-
-buildResponse : String -> Response
-buildResponse input =
-    { status = "200"
-    , statusDescription = "OK"
-    , body = input ++ " from ELM"
-    }
+    { status : String, statusDescription : String, body : String }
 
 
 main : Program () Model Msg
 main =
     Platform.worker
-        { init = \_ -> ( { input = "" }, Cmd.none )
+        { init = \_ -> ( { event = Nothing }, Cmd.none )
         , update =
             \msg model ->
                 case msg of
-                    Incoming arg ->
-                        ( { model | input = arg }, outputPort (buildResponse arg) )
-        , subscriptions = \_ -> inputPort Incoming
+                    Incoming result ->
+                        case result of
+                            Ok event ->
+                                ( { model | event = Just event }
+                                , outputPort
+                                    { status = "200"
+                                    , statusDescription = "OK"
+                                    , body =
+                                        event.records
+                                            |> List.map (\{ cf } -> cf.request.clientIp)
+                                            |> String.concat
+                                    }
+                                )
+
+                            Err _ ->
+                                ( model, Cmd.none )
+        , subscriptions = \_ -> inputPort (decodeEvent >> Incoming)
         }
+
+
+decodeEvent : Decode.Value -> Result Error Event
+decodeEvent =
+    Decode.decodeValue
+        (Decode.map Event
+            (Decode.field "Records"
+                (Decode.list
+                    (Decode.map CloudFront
+                        (Decode.field "cf"
+                            (Decode.map CFConfigResponse
+                                (Decode.field "request"
+                                    (Decode.map Request
+                                        (Decode.field "clientIp" Decode.string)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
