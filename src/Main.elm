@@ -1,6 +1,7 @@
 port module Main exposing (main)
 
-import CloudWorker.AWS exposing (CFConfigResponse, CloudFront, Event, Header, Output(..), Request, Response, decodeEvent, encodeOutput)
+import CloudWorker.AWS exposing (Event, Output(..), decodeEvent, encodeOutput)
+import Dict
 import Json.Decode as Decode exposing (Decoder, Error)
 import Json.Encode as Encode
 
@@ -37,7 +38,14 @@ main =
                                             , statusDescription = "OK"
                                             , body =
                                                 event.records
-                                                    |> List.map (\{ cf } -> cf.request.clientIp)
+                                                    |> List.map
+                                                        (\{ cf } ->
+                                                            (cf.request.headers
+                                                                |> Dict.keys
+                                                                |> List.map (\key -> key)
+                                                            )
+                                                                |> String.join ", "
+                                                        )
                                                     |> String.concat
                                             }
                                         )

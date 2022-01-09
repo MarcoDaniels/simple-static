@@ -1,4 +1,4 @@
-module CloudWorker.AWS exposing (..)
+module CloudWorker.AWS exposing (Event, Output(..), decodeEvent, encodeOutput)
 
 {-| Types based on:
 <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields>
@@ -38,18 +38,18 @@ type alias Response =
     }
 
 
-type alias CFConfigResponse =
-    { -- config : Config,
+type alias CloudFront =
+    { -- TODO: config : Config,
       request : Request
     }
 
 
-type alias CloudFront =
-    { cf : CFConfigResponse }
+type alias Record =
+    { cf : CloudFront }
 
 
 type alias Event =
-    { records : List CloudFront }
+    { records : List Record }
 
 
 decodeHeader : Decoder Header
@@ -69,11 +69,11 @@ decodeRequest =
         |> Decode.required "uri" Decode.string
 
 
-decodeCloudFront : Decoder CloudFront
+decodeCloudFront : Decoder Record
 decodeCloudFront =
-    Decode.succeed CloudFront
+    Decode.succeed Record
         |> Decode.required "cf"
-            (Decode.succeed CFConfigResponse
+            (Decode.succeed CloudFront
                 |> Decode.required "request" decodeRequest
             )
 
@@ -107,5 +107,13 @@ encodeOutput out =
         Req req ->
             Encode.object
                 [ ( "clientIp", Encode.string req.clientIp )
+
+                -- TODO, ( "headers", Encode.string req.method )
+                , ( "method", Encode.string req.method )
+                , ( "querystring"
+                  , req.querystring
+                        |> Maybe.map Encode.string
+                        |> Maybe.withDefault Encode.null
+                  )
                 , ( "uri", Encode.string req.uri )
                 ]
