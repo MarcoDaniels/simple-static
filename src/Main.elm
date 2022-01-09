@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
-import Event exposing (CFConfigResponse, CloudFront, Event, Request)
-import Json.Decode as Decode exposing (Error)
+import CloudWorker.AWS exposing (CFConfigResponse, CloudFront, Event, Header, Output(..), Request, Response, decodeEvent, encodeOutput)
+import Json.Decode as Decode exposing (Decoder, Error)
 import Json.Encode as Encode
 
 
@@ -17,18 +17,6 @@ type alias Model =
 
 type Msg
     = Incoming (Result Error Event)
-
-
-type alias Response =
-    { status : String
-    , statusDescription : String
-    , body : String
-    }
-
-
-type Output
-    = Res Response
-    | Req Request
 
 
 main : Program () Model Msg
@@ -58,45 +46,5 @@ main =
 
                             Err _ ->
                                 ( model, Cmd.none )
-        , subscriptions = \_ -> inputPort (decodeEvent >> Incoming)
+        , subscriptions = \_ -> inputPort (Decode.decodeValue decodeEvent >> Incoming)
         }
-
-
-encodeOutput : Output -> Encode.Value
-encodeOutput out =
-    case out of
-        Res res ->
-            Encode.object
-                [ ( "status", Encode.string res.status )
-                , ( "statusDescription", Encode.string res.statusDescription )
-                , ( "body", Encode.string res.body )
-                ]
-
-        Req req ->
-            Encode.object
-                [ ( "clientIp", Encode.string req.clientIp )
-                , ( "uri", Encode.string req.uri )
-                ]
-
-
-decodeEvent : Decode.Value -> Result Error Event
-decodeEvent =
-    Decode.decodeValue
-        (Decode.map Event
-            (Decode.field "Records"
-                (Decode.list
-                    (Decode.map CloudFront
-                        (Decode.field "cf"
-                            (Decode.map CFConfigResponse
-                                (Decode.field "request"
-                                    (Decode.map2 Request
-                                        (Decode.field "clientIp" Decode.string)
-                                        (Decode.field "uri" Decode.string)
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
