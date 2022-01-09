@@ -19,11 +19,10 @@ type alias Header =
 
 type alias Request =
     { clientIp : String
-
     --, headers : List ( String, List Header )
     --, method : String -- TODO: Type
     --, querystring : Maybe String
-    --, uri : String
+    , uri : String
     }
 
 
