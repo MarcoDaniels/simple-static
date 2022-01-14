@@ -35,6 +35,7 @@ type alias Response =
     { status : String
     , statusDescription : String
     , body : String
+    , headers : Dict.Dict String (List Header)
     }
 
 
@@ -94,6 +95,20 @@ type Output
     | Req Request
 
 
+encodeHeaders : Dict.Dict String (List Header) -> Encode.Value
+encodeHeaders heads =
+    heads
+        |> Encode.dict identity
+            (Encode.list
+                (\header ->
+                    Encode.object
+                        [ ( "key", Encode.string header.key )
+                        , ( "value", Encode.string header.value )
+                        ]
+                )
+            )
+
+
 encodeOutput : Output -> Encode.Value
 encodeOutput out =
     case out of
@@ -102,13 +117,13 @@ encodeOutput out =
                 [ ( "status", Encode.string res.status )
                 , ( "statusDescription", Encode.string res.statusDescription )
                 , ( "body", Encode.string res.body )
+                , ( "headers", encodeHeaders res.headers )
                 ]
 
         Req req ->
             Encode.object
                 [ ( "clientIp", Encode.string req.clientIp )
-
-                -- TODO, ( "headers", Encode.string req.method )
+                , ( "headers", encodeHeaders req.headers )
                 , ( "method", Encode.string req.method )
                 , ( "querystring"
                   , req.querystring

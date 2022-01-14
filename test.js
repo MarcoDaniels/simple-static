@@ -35,4 +35,7 @@ const payload = {
     ]
 }
 
-handler(payload, '', console.log)
+logJSON = (_, content) =>
+    console.log(JSON.stringify(content, null, 4))
+
+handler(payload, '', logJSON)

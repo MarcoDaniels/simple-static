@@ -47,6 +47,9 @@ main =
                                                                 |> String.join ", "
                                                         )
                                                     |> String.concat
+                                            , headers =
+                                                event.records
+                                                    |> List.foldr (\{ cf } _ -> cf.request.headers) Dict.empty
                                             }
                                         )
                                     )
