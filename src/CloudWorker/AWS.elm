@@ -1,4 +1,4 @@
-module CloudWorker.AWS exposing (Event, Output(..), decodeEvent, encodeOutput)
+module CloudWorker.AWS exposing (Event, EventResult(..), decodeEvent, encodeEventResult)
 
 {-| Types based on:
 <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields>
@@ -37,6 +37,10 @@ type alias Response =
     , headers : Dict.Dict String (List Header)
     , body : String
     }
+
+
+
+-- TODO: depending on event type (Origin Response), can have response (to add headers)
 
 
 type alias CloudFront =
@@ -96,13 +100,9 @@ decodeEvent =
             (Decode.list decodeCloudFront)
 
 
-
--- TODO:  not the best name
-
-
-type Output
-    = Res Response
-    | Req Request
+type EventResult
+    = ResultResponse Response
+    | ResultRequest Request
 
 
 encodeHeaders : Dict.Dict String (List Header) -> Encode.Value
@@ -126,22 +126,22 @@ encodeQuerystring maybeQuerystring =
         |> Maybe.withDefault Encode.null
 
 
-encodeOutput : Output -> Encode.Value
-encodeOutput out =
-    case out of
-        Res res ->
+encodeEventResult : EventResult -> Encode.Value
+encodeEventResult result =
+    case result of
+        ResultResponse response ->
             Encode.object
-                [ ( "status", Encode.string res.status )
-                , ( "statusDescription", Encode.string res.statusDescription )
-                , ( "headers", res.headers |> encodeHeaders )
-                , ( "body", Encode.string res.body )
+                [ ( "status", Encode.string response.status )
+                , ( "statusDescription", Encode.string response.statusDescription )
+                , ( "headers", response.headers |> encodeHeaders )
+                , ( "body", Encode.string response.body )
                 ]
 
-        Req req ->
+        ResultRequest request ->
             Encode.object
-                [ ( "clientIp", Encode.string req.clientIp )
-                , ( "headers", req.headers |> encodeHeaders )
-                , ( "method", Encode.string req.method )
-                , ( "querystring", req.querystring |> encodeQuerystring )
-                , ( "uri", Encode.string req.uri )
+                [ ( "clientIp", Encode.string request.clientIp )
+                , ( "headers", request.headers |> encodeHeaders )
+                , ( "method", Encode.string request.method )
+                , ( "querystring", request.querystring |> encodeQuerystring )
+                , ( "uri", Encode.string request.uri )
                 ]

@@ -1,6 +1,6 @@
 port module Main exposing (main)
 
-import CloudWorker.AWS exposing (Event, Output(..), decodeEvent, encodeOutput)
+import CloudWorker.AWS exposing (Event, EventResult(..), decodeEvent, encodeEventResult)
 import Dict
 import Json.Decode as Decode exposing (Decoder, Error)
 import Json.Encode as Encode
@@ -32,8 +32,8 @@ main =
                             Ok event ->
                                 ( { model | event = Just event }
                                 , outputPort
-                                    (encodeOutput
-                                        (Req
+                                    (encodeEventResult
+                                        (ResultRequest
                                             (event.records
                                                 |> List.foldr
                                                     (\{ cf } modRequest ->
