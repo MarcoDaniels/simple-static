@@ -33,24 +33,23 @@ main =
                                 ( { model | event = Just event }
                                 , outputPort
                                     (encodeOutput
-                                        (Res
-                                            { status = "200"
-                                            , statusDescription = "OK"
-                                            , body =
-                                                event.records
-                                                    |> List.map
-                                                        (\{ cf } ->
-                                                            (cf.request.headers
-                                                                |> Dict.keys
-                                                                |> List.map (\key -> key)
-                                                            )
-                                                                |> String.join ", "
-                                                        )
-                                                    |> String.concat
-                                            , headers =
-                                                event.records
-                                                    |> List.foldr (\{ cf } _ -> cf.request.headers) Dict.empty
-                                            }
+                                        (Req
+                                            (event.records
+                                                |> List.foldr
+                                                    (\{ cf } modRequest ->
+                                                        let
+                                                            request =
+                                                                cf.request
+                                                        in
+                                                        { request | headers = Dict.union modRequest.headers request.headers }
+                                                    )
+                                                    { clientIp = ""
+                                                    , headers = Dict.insert "my-head" [ { key = "what", value = "hey" } ] Dict.empty
+                                                    , method = ""
+                                                    , querystring = Nothing
+                                                    , uri = ""
+                                                    }
+                                            )
                                         )
                                     )
                                 )

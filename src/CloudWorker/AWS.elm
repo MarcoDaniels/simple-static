@@ -34,14 +34,14 @@ type alias Request =
 type alias Response =
     { status : String
     , statusDescription : String
-    , body : String
     , headers : Dict.Dict String (List Header)
+    , body : String
     }
 
 
 type alias CloudFront =
-    { -- TODO: config : Config,
-      request : Request
+    { config : Config
+    , request : Request
     }
 
 
@@ -70,11 +70,21 @@ decodeRequest =
         |> Decode.required "uri" Decode.string
 
 
+decodeConfig : Decoder Config
+decodeConfig =
+    Decode.succeed Config
+        |> Decode.required "distributionDomainName" Decode.string
+        |> Decode.required "distributionId" Decode.string
+        |> Decode.required "eventType" Decode.string
+        |> Decode.required "requestId" Decode.string
+
+
 decodeCloudFront : Decoder Record
 decodeCloudFront =
     Decode.succeed Record
         |> Decode.required "cf"
             (Decode.succeed CloudFront
+                |> Decode.required "config" decodeConfig
                 |> Decode.required "request" decodeRequest
             )
 
@@ -96,8 +106,8 @@ type Output
 
 
 encodeHeaders : Dict.Dict String (List Header) -> Encode.Value
-encodeHeaders heads =
-    heads
+encodeHeaders headers =
+    headers
         |> Encode.dict identity
             (Encode.list
                 (\header ->
@@ -109,6 +119,13 @@ encodeHeaders heads =
             )
 
 
+encodeQuerystring : Maybe String -> Encode.Value
+encodeQuerystring maybeQuerystring =
+    maybeQuerystring
+        |> Maybe.map Encode.string
+        |> Maybe.withDefault Encode.null
+
+
 encodeOutput : Output -> Encode.Value
 encodeOutput out =
     case out of
@@ -116,19 +133,15 @@ encodeOutput out =
             Encode.object
                 [ ( "status", Encode.string res.status )
                 , ( "statusDescription", Encode.string res.statusDescription )
+                , ( "headers", res.headers |> encodeHeaders )
                 , ( "body", Encode.string res.body )
-                , ( "headers", encodeHeaders res.headers )
                 ]
 
         Req req ->
             Encode.object
                 [ ( "clientIp", Encode.string req.clientIp )
-                , ( "headers", encodeHeaders req.headers )
+                , ( "headers", req.headers |> encodeHeaders )
                 , ( "method", Encode.string req.method )
-                , ( "querystring"
-                  , req.querystring
-                        |> Maybe.map Encode.string
-                        |> Maybe.withDefault Encode.null
-                  )
+                , ( "querystring", req.querystring |> encodeQuerystring )
                 , ( "uri", Encode.string req.uri )
                 ]
