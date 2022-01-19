@@ -1,4 +1,4 @@
-module CloudWorker.AWS exposing (Event, EventResult(..), decodeEvent, encodeEventResult)
+module AWS exposing (Event, EventResult(..), decodeEvent, encodeEventResult)
 
 {-| Types based on:
 <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields>

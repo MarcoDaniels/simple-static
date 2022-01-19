@@ -1,11 +1,11 @@
 module Main exposing (main)
 
-import CloudWorker.AWS exposing (Event, EventResult(..))
-import CloudWorker.CloudWorker exposing (cloudWorker)
+import AWS exposing (Event, EventResult(..))
+import CloudWorker exposing (cloudWorker)
 import Dict
 
 
-main : Program () CloudWorker.CloudWorker.Model CloudWorker.CloudWorker.Msg
+main : Program () CloudWorker.Model CloudWorker.Msg
 main =
     cloudWorker
         (\event ->

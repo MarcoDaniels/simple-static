@@ -1,6 +1,6 @@
-port module CloudWorker.CloudWorker exposing (..)
+port module CloudWorker exposing (..)
 
-import CloudWorker.AWS exposing (Event, EventResult, decodeEvent, encodeEventResult)
+import AWS exposing (Event, EventResult, decodeEvent, encodeEventResult)
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 
