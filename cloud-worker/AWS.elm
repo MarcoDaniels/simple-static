@@ -1,4 +1,4 @@
-module AWS exposing (Event, EventResult(..), decodeEvent, encodeEventResult)
+module AWS exposing (Event, EventResult(..), Request, Response, decodeEvent, encodeEventResult, Headers, Header)
 
 {-| Types based on:
 <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields>
@@ -22,10 +22,16 @@ type alias Header =
     { key : String, value : String }
 
 
+type alias Headers =
+    Dict.Dict String (List Header)
+
+
 type alias Request =
     { clientIp : String
-    , headers : Dict.Dict String (List Header)
+    , headers : Headers
     , method : String
+
+    -- TODO: origin : Dict {customHeaders ...}
     , querystring : Maybe String
     , uri : String
     }
@@ -34,7 +40,7 @@ type alias Request =
 type alias Response =
     { status : String
     , statusDescription : String
-    , headers : Dict.Dict String (List Header)
+    , headers : Headers
     , body : String
     }
 
@@ -105,7 +111,7 @@ type EventResult
     | ResultRequest Request
 
 
-encodeHeaders : Dict.Dict String (List Header) -> Encode.Value
+encodeHeaders : Headers -> Encode.Value
 encodeHeaders headers =
     headers
         |> Encode.dict identity

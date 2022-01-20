@@ -1,6 +1,7 @@
 port module CloudWorker exposing (..)
 
-import AWS exposing (Event, EventResult, decodeEvent, encodeEventResult)
+import AWS exposing (Event, EventResult(..), Headers, Request, decodeEvent, encodeEventResult)
+import Dict
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 
@@ -19,10 +20,19 @@ type Msg
     = Incoming (Result Error Event)
 
 
-cloudWorker : (Event -> EventResult) -> Program () Model Msg
-cloudWorker eventResult =
+
+-- originResponse: {Request, Response} -> Response
+
+
+toCloudWorker : (Event -> EventResult) -> Program () Model Msg
+toCloudWorker eventResult =
     Platform.worker
         { init = \_ -> ( { event = Nothing }, Cmd.none )
+        , subscriptions =
+            \_ ->
+                Decode.decodeValue decodeEvent
+                    >> Incoming
+                    |> incomingEvent
         , update =
             \msg model ->
                 case msg of
@@ -37,9 +47,29 @@ cloudWorker eventResult =
 
                             Err _ ->
                                 ( model, Cmd.none )
-        , subscriptions =
-            \_ ->
-                Decode.decodeValue decodeEvent
-                    >> Incoming
-                    |> incomingEvent
         }
+
+
+
+-- originRequest: Request -> Request | Response
+
+
+originRequest : { request : Request -> Request } -> Event -> EventResult
+originRequest { request } event =
+    ResultRequest
+        (event.records
+            |> List.foldr
+                (\{ cf } _ -> cf.request)
+                { clientIp = ""
+                , headers = Dict.empty
+                , method = ""
+                , querystring = Nothing
+                , uri = ""
+                }
+            |> request
+        )
+
+
+withHeader : Headers -> Request -> Request
+withHeader headers request =
+    { request | headers = Dict.union headers request.headers }
